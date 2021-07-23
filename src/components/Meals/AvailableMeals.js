@@ -7,31 +7,51 @@ import MealItem from './MealItem/MealItem';
 const AvailableMeals = () => {
   const [meals, setMeals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [httpError, setHttpError] = useState(null);
+
+  const fetchMeals = async () => {
+    const response = await fetch(
+      'https://react-http-6d16f-default-rtdb.firebaseio.com/meals.json'
+    );
+
+    if (!response.ok) {
+      throw new Error('Something went wrong!');
+    }
+
+    const responseData = await response.json();
+    const loadedMeals = Object.keys(responseData).map((mealKey) => {
+      return {
+        id: mealKey,
+        name: responseData[mealKey].name,
+        description: responseData[mealKey.description],
+        price: responseData[mealKey].price,
+      };
+    });
+    setMeals(loadedMeals);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    const fetchMeals = async () => {
-      const response = await fetch(
-        'https://react-http-6d16f-default-rtdb.firebaseio.com/meals.json'
-      );
-      const responseData = await response.json();
-      const loadedMeals = Object.keys(responseData).map((mealKey) => {
-        return {
-          id: mealKey,
-          name: responseData[mealKey].name,
-          description: responseData[mealKey.description],
-          price: responseData[mealKey].price,
-        };
+    fetchMeals()
+      .then()
+      .catch((error) => {
+        setIsLoading(false);
+        setHttpError(error.message);
       });
-      setMeals(loadedMeals);
-      setIsLoading(false);
-    };
-    fetchMeals();
   }, []);
 
   if (isLoading) {
     return (
       <section className={classes.mealsLoading}>
         <p>Loading...</p>
+      </section>
+    );
+  }
+
+  if (httpError) {
+    return (
+      <section>
+        <p className={classes.mealsError}>{httpError}</p>
       </section>
     );
   }
